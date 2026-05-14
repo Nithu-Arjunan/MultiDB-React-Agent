@@ -1,0 +1,265 @@
+{
+  "support_tickets": [
+    {
+      "ticket_id": "TKT-001",
+      "customer_id": "SN-10001",
+      "customer_name": "Alice Johnson",
+      "flight_number": "SN404",
+      "subject": "Cancelled flight refund not received",
+      "description": "My flight SN404 was cancelled but I haven't received my refund after 7 days.",
+      "status": "open",
+      "priority": "high",
+      "created_at": "2025-06-04T10:23:00Z",
+      "updated_at": "2025-06-04T10:23:00Z",
+      "tags": ["refund", "cancellation"]
+    },
+    {
+      "ticket_id": "TKT-002",
+      "customer_id": "SN-10002",
+      "customer_name": "Bob Smith",
+      "flight_number": "SN202",
+      "subject": "Flight delayed by 3 hours - missed connection",
+      "description": "SN202 was delayed causing me to miss my connecting flight to Toronto.",
+      "status": "in_progress",
+      "priority": "high",
+      "created_at": "2025-06-01T20:15:00Z",
+      "updated_at": "2025-06-02T09:00:00Z",
+      "tags": ["delay", "missed_connection", "compensation"]
+    },
+    {
+      "ticket_id": "TKT-003",
+      "customer_id": "SN-10004",
+      "customer_name": "David Lee",
+      "flight_number": "SN101",
+      "subject": "Seat upgrade request",
+      "description": "I would like to upgrade from economy to business for flight SN101 using my frequent flyer miles.",
+      "status": "resolved",
+      "priority": "low",
+      "created_at": "2025-05-28T14:00:00Z",
+      "updated_at": "2025-05-29T11:30:00Z",
+      "resolution": "Upgrade approved. Seat changed to 4B (business class).",
+      "tags": ["upgrade", "frequent_flyer"]
+    },
+    {
+      "ticket_id": "TKT-004",
+      "customer_id": "SN-10003",
+      "customer_name": "Carol White",
+      "flight_number": "SN505",
+      "subject": "Special meal request - vegan",
+      "description": "I need a vegan meal for flight SN505 JFK to LHR. My booking does not show a meal preference.",
+      "status": "resolved",
+      "priority": "medium",
+      "created_at": "2025-06-01T08:00:00Z",
+      "updated_at": "2025-06-01T12:00:00Z",
+      "resolution": "Vegan meal confirmed for seat 2A.",
+      "tags": ["meal", "special_request"]
+    },
+    {
+      "ticket_id": "TKT-005",
+      "customer_id": "SN-10005",
+      "customer_name": "Eva Martinez",
+      "flight_number": "SN303",
+      "subject": "Lost baggage claim",
+      "description": "My checked bag did not arrive on flight SN303. Filed PIR at ORD airport. Reference: ORD-88421.",
+      "status": "in_progress",
+      "priority": "high",
+      "created_at": "2025-06-02T13:45:00Z",
+      "updated_at": "2025-06-03T08:00:00Z",
+      "tags": ["baggage", "lost", "claim"]
+    }
+  ],
+  "flight_reviews": [
+    {
+      "review_id": "REV-001",
+      "customer_id": "SN-10001",
+      "customer_name": "Alice Johnson",
+      "flight_number": "SN101",
+      "route": "JFK → LAX",
+      "travel_date": "2025-06-01T08:00:00Z",
+      "cabin_class": "economy",
+      "overall_rating": 4,
+      "ratings": {
+        "seat_comfort": 4,
+        "food_quality": 3,
+        "crew_service": 5,
+        "punctuality": 4,
+        "entertainment": 4
+      },
+      "review_text": "Great crew, very attentive. Food was average but acceptable for economy. Flight arrived on time.",
+      "would_recommend": true,
+      "submitted_at": "2025-06-02T09:00:00Z"
+    },
+    {
+      "review_id": "REV-002",
+      "customer_id": "SN-10002",
+      "customer_name": "Bob Smith",
+      "flight_number": "SN202",
+      "route": "LAX → ORD",
+      "travel_date": "2025-06-01T13:00:00Z",
+      "cabin_class": "economy",
+      "overall_rating": 2,
+      "ratings": {
+        "seat_comfort": 3,
+        "food_quality": 2,
+        "crew_service": 3,
+        "punctuality": 1,
+        "entertainment": 3
+      },
+      "review_text": "Flight was delayed 3 hours with no clear communication from staff. Missed my connection. Very disappointed.",
+      "would_recommend": false,
+      "submitted_at": "2025-06-02T22:00:00Z"
+    },
+    {
+      "review_id": "REV-003",
+      "customer_id": "SN-10003",
+      "customer_name": "Carol White",
+      "flight_number": "SN505",
+      "route": "JFK → LHR",
+      "travel_date": "2025-06-04T22:00:00Z",
+      "cabin_class": "business",
+      "overall_rating": 5,
+      "ratings": {
+        "seat_comfort": 5,
+        "food_quality": 5,
+        "crew_service": 5,
+        "punctuality": 5,
+        "entertainment": 5
+      },
+      "review_text": "Outstanding business class experience. Lie-flat bed, exceptional food, and the crew was phenomenal. Worth every mile.",
+      "would_recommend": true,
+      "submitted_at": "2025-06-05T14:30:00Z"
+    },
+    {
+      "review_id": "REV-004",
+      "customer_id": "SN-10005",
+      "customer_name": "Eva Martinez",
+      "flight_number": "SN303",
+      "route": "ORD → MIA",
+      "travel_date": "2025-06-02T09:00:00Z",
+      "cabin_class": "economy",
+      "overall_rating": 3,
+      "ratings": {
+        "seat_comfort": 3,
+        "food_quality": 3,
+        "crew_service": 4,
+        "punctuality": 4,
+        "entertainment": 2
+      },
+      "review_text": "Short flight so not much to complain about. Crew was friendly. No entertainment system on this aircraft.",
+      "would_recommend": true,
+      "submitted_at": "2025-06-02T16:00:00Z"
+    },
+    {
+      "review_id": "REV-005",
+      "customer_id": "SN-10004",
+      "customer_name": "David Lee",
+      "flight_number": "SN101",
+      "route": "JFK → LAX",
+      "travel_date": "2025-06-01T08:00:00Z",
+      "cabin_class": "economy",
+      "overall_rating": 4,
+      "ratings": {
+        "seat_comfort": 3,
+        "food_quality": 4,
+        "crew_service": 5,
+        "punctuality": 4,
+        "entertainment": 4
+      },
+      "review_text": "Smooth flight. The upgrade I requested was honored - thank you SkyNova! Crew was excellent.",
+      "would_recommend": true,
+      "submitted_at": "2025-06-01T20:00:00Z"
+    }
+  ],
+  "user_activity_logs": [
+    {
+      "log_id": "LOG-001",
+      "customer_id": "SN-10001",
+      "action": "booking_created",
+      "details": {"flight_number": "SN101", "booking_id": 1, "cabin_class": "economy"},
+      "timestamp": "2025-05-20T14:32:00Z",
+      "ip_address": "192.168.1.10",
+      "device": "web"
+    },
+    {
+      "log_id": "LOG-002",
+      "customer_id": "SN-10001",
+      "action": "check_in",
+      "details": {"flight_number": "SN101", "seat": "14A", "boarding_pass_issued": true},
+      "timestamp": "2025-05-31T18:00:00Z",
+      "ip_address": "192.168.1.10",
+      "device": "mobile"
+    },
+    {
+      "log_id": "LOG-003",
+      "customer_id": "SN-10002",
+      "action": "booking_created",
+      "details": {"flight_number": "SN202", "booking_id": 4, "cabin_class": "economy"},
+      "timestamp": "2025-05-22T09:15:00Z",
+      "ip_address": "10.0.0.5",
+      "device": "web"
+    },
+    {
+      "log_id": "LOG-004",
+      "customer_id": "SN-10002",
+      "action": "support_ticket_opened",
+      "details": {"ticket_id": "TKT-002", "reason": "delay_compensation"},
+      "timestamp": "2025-06-01T20:15:00Z",
+      "ip_address": "10.0.0.5",
+      "device": "mobile"
+    },
+    {
+      "log_id": "LOG-005",
+      "customer_id": "SN-10003",
+      "action": "booking_created",
+      "details": {"flight_number": "SN505", "booking_id": 3, "cabin_class": "business"},
+      "timestamp": "2025-05-15T11:00:00Z",
+      "ip_address": "172.16.0.3",
+      "device": "web"
+    },
+    {
+      "log_id": "LOG-006",
+      "customer_id": "SN-10003",
+      "action": "check_in",
+      "details": {"flight_number": "SN505", "seat": "2A", "boarding_pass_issued": true},
+      "timestamp": "2025-06-04T18:30:00Z",
+      "ip_address": "172.16.0.3",
+      "device": "web"
+    },
+    {
+      "log_id": "LOG-007",
+      "customer_id": "SN-10004",
+      "action": "booking_created",
+      "details": {"flight_number": "SN202", "booking_id": 4, "cabin_class": "economy"},
+      "timestamp": "2025-05-25T16:45:00Z",
+      "ip_address": "192.168.2.20",
+      "device": "mobile"
+    },
+    {
+      "log_id": "LOG-008",
+      "customer_id": "SN-10005",
+      "action": "booking_created",
+      "details": {"flight_number": "SN303", "booking_id": 5, "cabin_class": "economy"},
+      "timestamp": "2025-05-18T08:30:00Z",
+      "ip_address": "10.10.10.5",
+      "device": "web"
+    },
+    {
+      "log_id": "LOG-009",
+      "customer_id": "SN-10005",
+      "action": "baggage_claim_filed",
+      "details": {"flight_number": "SN303", "pir_reference": "ORD-88421"},
+      "timestamp": "2025-06-02T13:30:00Z",
+      "ip_address": "10.10.10.5",
+      "device": "mobile"
+    },
+    {
+      "log_id": "LOG-010",
+      "customer_id": "SN-10001",
+      "action": "support_ticket_opened",
+      "details": {"ticket_id": "TKT-001", "reason": "refund_not_received"},
+      "timestamp": "2025-06-04T10:23:00Z",
+      "ip_address": "192.168.1.10",
+      "device": "web"
+    }
+  ]
+}

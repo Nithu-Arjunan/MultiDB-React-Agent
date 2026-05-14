@@ -1,0 +1,14 @@
+.venv/
+__pycache__/
+*.py[cod]
+
+src/.env
+.env
+
+src/frontend/node_modules/
+src/frontend/dist/
+src/frontend/*.tsbuildinfo
+src/frontend/vite.config.js
+src/frontend/vite.config.d.ts
+
+.playwright-mcp/
