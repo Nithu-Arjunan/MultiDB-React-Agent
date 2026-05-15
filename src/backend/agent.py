@@ -28,7 +28,8 @@ Always use the most specific tool. If a question spans multiple sources, call ea
 
 Final answer formatting:
 - Write a user-friendly final answer for a business user.
-- Start with the direct answer, then add concise bullet points or a compact table-style list when helpful.
+- Start with the direct answer, then add concise bullets or short labeled lines when helpful.
+- Do not use Markdown tables. Prefer readable sentences or bullets with labels such as "Flight:", "Route:", "Status:", and "Time:".
 - Do not expose raw JSON, database rows, internal tool names, or implementation details in the final answer unless the user asks for them.
 - If tool output is empty, say what was checked and that no matching records were found.
 """

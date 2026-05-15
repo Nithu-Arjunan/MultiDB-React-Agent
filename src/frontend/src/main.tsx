@@ -1,4 +1,4 @@
-import React, { FormEvent, useMemo, useState } from "react";
+import React, { FormEvent, useEffect, useMemo, useState } from "react";
 import { createRoot } from "react-dom/client";
 import "./styles.css";
 
@@ -28,11 +28,48 @@ type ChatTurn = {
   traceEvents: TraceEvent[];
 };
 
-const SESSION_KEY = "skynova-demo-login";
+type AuthUser = {
+  sub: string;
+  email: string;
+  name: string;
+  picture: string;
+};
+
+type AuthResponse = {
+  access_token: string;
+  token_type: string;
+  user: AuthUser;
+};
+
+type GoogleCredentialResponse = {
+  credential: string;
+};
+
+declare global {
+  interface Window {
+    google?: {
+      accounts: {
+        id: {
+          initialize: (config: {
+            client_id: string;
+            callback: (response: GoogleCredentialResponse) => void;
+          }) => void;
+          renderButton: (
+            element: HTMLElement,
+            options: { theme: string; size: string; width: number }
+          ) => void;
+        };
+      };
+    };
+  }
+}
+
+const TOKEN_KEY = "skynova-auth-token";
+const USER_KEY = "skynova-auth-user";
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(
-    () => window.localStorage.getItem(SESSION_KEY) === "true"
+    () => Boolean(window.localStorage.getItem(TOKEN_KEY))
   );
 
   if (!isLoggedIn) {
@@ -43,46 +80,86 @@ function App() {
 }
 
 function LoginPage({ onLogin }: { onLogin: () => void }) {
-  const [name, setName] = useState("");
-  const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
 
-  function submit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (!name.trim() || !password.trim()) {
-      setError("Enter a username and password.");
-      return;
+  useEffect(() => {
+    let cancelled = false;
+
+    async function setupGoogleLogin() {
+      try {
+        const response = await fetch("/auth/config");
+        const config = (await response.json()) as { google_client_id: string };
+        if (!config.google_client_id) {
+          throw new Error("Google client ID is not configured.");
+        }
+
+        await waitForGoogleIdentity();
+        if (cancelled) {
+          return;
+        }
+
+        window.google?.accounts.id.initialize({
+          client_id: config.google_client_id,
+          callback: handleGoogleCredential,
+        });
+
+        const button = document.getElementById("google-signin-button");
+        if (button) {
+          window.google?.accounts.id.renderButton(button, {
+            theme: "outline",
+            size: "large",
+            width: 320,
+          });
+        }
+        setIsLoading(false);
+      } catch (caught) {
+        const message = caught instanceof Error ? caught.message : "Google login failed.";
+        setError(message);
+        setIsLoading(false);
+      }
     }
-    window.localStorage.setItem(SESSION_KEY, "true");
-    onLogin();
-  }
+
+    async function handleGoogleCredential(googleResponse: GoogleCredentialResponse) {
+      try {
+        setError("");
+        const response = await fetch("/auth/google", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ credential: googleResponse.credential }),
+        });
+
+        if (!response.ok) {
+          throw new Error("Google sign-in was rejected.");
+        }
+
+        const auth = (await response.json()) as AuthResponse;
+        window.localStorage.setItem(TOKEN_KEY, auth.access_token);
+        window.localStorage.setItem(USER_KEY, JSON.stringify(auth.user));
+        onLogin();
+      } catch (caught) {
+        const message = caught instanceof Error ? caught.message : "Google login failed.";
+        setError(message);
+      }
+    }
+
+    setupGoogleLogin();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [onLogin]);
 
   return (
     <main className="login-shell">
       <section className="login-panel" aria-labelledby="login-title">
         <div className="brand-mark">SN</div>
         <h1 id="login-title">SkyNova Agent</h1>
-        <form className="login-form" onSubmit={submit}>
-          <label>
-            Username
-            <input
-              autoComplete="username"
-              value={name}
-              onChange={(event) => setName(event.target.value)}
-            />
-          </label>
-          <label>
-            Password
-            <input
-              autoComplete="current-password"
-              type="password"
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-            />
-          </label>
+        <div className="login-form">
+          <div id="google-signin-button" className="google-button-slot" />
+          {isLoading && <p className="muted">Loading Google sign-in...</p>}
           {error && <p className="form-error">{error}</p>}
-          <button type="submit">Login</button>
-        </form>
+        </div>
       </section>
     </main>
   );
@@ -109,6 +186,11 @@ function ChatPage({ onLogout }: { onLogout: () => void }) {
     setError("");
 
     try {
+      const token = window.localStorage.getItem(TOKEN_KEY);
+      if (!token) {
+        throw new Error("Please sign in again.");
+      }
+
       const turnId = Date.now();
       setTurns((existing) => [
         {
@@ -122,9 +204,19 @@ function ChatPage({ onLogout }: { onLogout: () => void }) {
 
       const response = await fetch("/chat/stream", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
         body: JSON.stringify({ question: currentQuestion })
       });
+
+      if (response.status === 401) {
+        window.localStorage.removeItem(TOKEN_KEY);
+        window.localStorage.removeItem(USER_KEY);
+        onLogout();
+        throw new Error("Your session expired. Please sign in again.");
+      }
 
       if (!response.ok) {
         throw new Error(`Request failed with ${response.status}`);
@@ -147,7 +239,8 @@ function ChatPage({ onLogout }: { onLogout: () => void }) {
   }
 
   function logout() {
-    window.localStorage.removeItem(SESSION_KEY);
+    window.localStorage.removeItem(TOKEN_KEY);
+    window.localStorage.removeItem(USER_KEY);
     onLogout();
   }
 
@@ -302,9 +395,72 @@ function formatFinalAnswer(answer: string) {
   if (!answer.trim()) {
     return <p className="muted">Waiting for final answer...</p>;
   }
+
+  const markdownTable = formatMarkdownTableAnswer(answer);
+  if (markdownTable) {
+    return markdownTable;
+  }
+
   return answer.split(/\n{2,}/).map((paragraph, index) => (
     <p key={`${paragraph}-${index}`}>{paragraph}</p>
   ));
+}
+
+function formatMarkdownTableAnswer(answer: string) {
+  const lines = answer
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean);
+  const tableStart = lines.findIndex((line) => line.startsWith("|") && line.endsWith("|"));
+  if (tableStart < 0 || tableStart + 2 >= lines.length) {
+    return null;
+  }
+
+  const intro = lines.slice(0, tableStart).join(" ");
+  const headers = splitMarkdownTableRow(lines[tableStart]);
+  const separator = lines[tableStart + 1];
+  if (!separator.includes("---")) {
+    return null;
+  }
+
+  const rows = lines
+    .slice(tableStart + 2)
+    .filter((line) => line.startsWith("|") && line.endsWith("|"))
+    .map(splitMarkdownTableRow);
+
+  if (!headers.length || !rows.length) {
+    return null;
+  }
+
+  return (
+    <>
+      {intro && <p>{intro}</p>}
+      <div className="answer-card-grid">
+        {rows.map((row, rowIndex) => (
+          <div className="answer-card" key={`${row.join("-")}-${rowIndex}`}>
+            {headers.map((header, index) => (
+              <div className="answer-field" key={`${header}-${index}`}>
+                <span>{humanizeHeader(header)}</span>
+                <strong>{row[index] || "N/A"}</strong>
+              </div>
+            ))}
+          </div>
+        ))}
+      </div>
+    </>
+  );
+}
+
+function splitMarkdownTableRow(row: string) {
+  return row
+    .replace(/^\|/, "")
+    .replace(/\|$/, "")
+    .split("|")
+    .map((cell) => cell.trim());
+}
+
+function humanizeHeader(header: string) {
+  return header.replace(/_/g, " ");
 }
 
 async function readSseStream(
@@ -428,6 +584,24 @@ function findLastToolCallIndex(toolCalls: ToolCall[], tool: string) {
     }
   }
   return -1;
+}
+
+function waitForGoogleIdentity() {
+  return new Promise<void>((resolve, reject) => {
+    const started = Date.now();
+    const timer = window.setInterval(() => {
+      if (window.google?.accounts?.id) {
+        window.clearInterval(timer);
+        resolve();
+        return;
+      }
+
+      if (Date.now() - started > 8000) {
+        window.clearInterval(timer);
+        reject(new Error("Google sign-in script did not load."));
+      }
+    }, 100);
+  });
 }
 
 createRoot(document.getElementById("root")!).render(

@@ -10,6 +10,7 @@ class AgentAnswerFormatTests(unittest.TestCase):
         self.assertIn("user-friendly", TOOL_ROUTING_HINT)
         self.assertIn("Do not expose raw JSON", TOOL_ROUTING_HINT)
         self.assertIn("bullet", TOOL_ROUTING_HINT.lower())
+        self.assertIn("Do not use Markdown tables", TOOL_ROUTING_HINT)
 
 
 if __name__ == "__main__":

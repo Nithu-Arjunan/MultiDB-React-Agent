@@ -25,6 +25,21 @@ class FrontendContentTests(unittest.TestCase):
         self.assertIn('fetch("/chat/stream"', source)
         self.assertIn("Agent trace", source)
 
+    def test_frontend_uses_google_auth_and_bearer_token(self) -> None:
+        source = (ROOT / "src" / "frontend" / "src" / "main.tsx").read_text(encoding="utf-8")
+        index = (ROOT / "src" / "frontend" / "index.html").read_text(encoding="utf-8")
+
+        self.assertIn('fetch("/auth/google"', source)
+        self.assertIn("Authorization", source)
+        self.assertIn("skynova-auth-token", source)
+        self.assertIn("https://accounts.google.com/gsi/client", index)
+
+    def test_frontend_can_render_markdown_table_answers_as_user_friendly_cards(self) -> None:
+        source = (ROOT / "src" / "frontend" / "src" / "main.tsx").read_text(encoding="utf-8")
+
+        self.assertIn("formatMarkdownTableAnswer", source)
+        self.assertIn("answer-card-grid", source)
+
 
 if __name__ == "__main__":
     unittest.main()

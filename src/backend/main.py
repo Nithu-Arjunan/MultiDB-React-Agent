@@ -11,13 +11,15 @@ if __package__ in {None, ""}:
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from dotenv import load_dotenv
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 load_dotenv(Path(__file__).parents[1] / ".env")
+
+from backend.auth import create_access_token, get_current_user, verify_google_id_token  # noqa: E402
 
 from backend.agent import build_agent  # noqa: E402 — must load env before importing
 
@@ -39,6 +41,27 @@ class ChatResponse(BaseModel):
     tool_calls: list[ToolCallRecord]
     warnings: list[str]
     elapsed_ms: int
+
+
+class GoogleLoginRequest(BaseModel):
+    credential: str
+
+
+class AuthUser(BaseModel):
+    sub: str
+    email: str
+    name: str = ""
+    picture: str = ""
+
+
+class AuthResponse(BaseModel):
+    access_token: str
+    token_type: str
+    user: AuthUser
+
+
+class AuthConfigResponse(BaseModel):
+    google_client_id: str
 
 
 def format_sse(event: str, data: dict) -> str:
@@ -73,8 +96,38 @@ app.add_middleware(
 
 # ── Endpoint ──────────────────────────────────────────────────────────────────
 
+@app.post("/auth/google", response_model=AuthResponse)
+async def auth_google(req: GoogleLoginRequest):
+    google_user = verify_google_id_token(req.credential)
+    user = AuthUser(
+        sub=google_user["sub"],
+        email=google_user["email"],
+        name=google_user.get("name", ""),
+        picture=google_user.get("picture", ""),
+    )
+    access_token = create_access_token(user.model_dump())
+    return AuthResponse(access_token=access_token, token_type="bearer", user=user)
+
+
+@app.get("/auth/config", response_model=AuthConfigResponse)
+async def auth_config():
+    import os
+
+    return AuthConfigResponse(google_client_id=os.environ.get("GOOGLE_CLIENT_ID", ""))
+
+
+@app.get("/auth/me", response_model=AuthUser)
+async def auth_me(current_user: dict = Depends(get_current_user)):
+    return AuthUser(
+        sub=current_user["sub"],
+        email=current_user["email"],
+        name=current_user.get("name", ""),
+        picture=current_user.get("picture", ""),
+    )
+
+
 @app.post("/chat", response_model=ChatResponse)
-async def chat(req: ChatRequest):
+async def chat(req: ChatRequest, current_user: dict = Depends(get_current_user)):
     start = time.monotonic()
 
     result = agent_executor.invoke({"input": req.question})
@@ -109,7 +162,7 @@ async def chat(req: ChatRequest):
 
 
 @app.post("/chat/stream")
-async def chat_stream(req: ChatRequest):
+async def chat_stream(req: ChatRequest, current_user: dict = Depends(get_current_user)):
     def event_stream():
         try:
             for event in agent_executor.stream({"input": req.question}):

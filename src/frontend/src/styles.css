@@ -247,6 +247,39 @@ textarea:focus {
   white-space: pre-wrap;
 }
 
+.answer-card-grid {
+  display: grid;
+  gap: 12px;
+  white-space: normal;
+}
+
+.answer-card {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px 16px;
+  padding: 14px;
+  border: 1px solid #dce7e2;
+  border-radius: 8px;
+  background: #f7faf8;
+}
+
+.answer-field {
+  display: grid;
+  gap: 3px;
+}
+
+.answer-field span {
+  color: #66736d;
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.answer-field strong {
+  color: #16201c;
+  font-weight: 800;
+}
+
 .trace-heading {
   display: flex;
   align-items: center;

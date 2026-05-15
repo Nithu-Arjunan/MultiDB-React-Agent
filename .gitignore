@@ -1,6 +1,7 @@
 .venv/
 __pycache__/
 *.py[cod]
+*.egg-info/
 
 src/.env
 .env
@@ -12,3 +13,4 @@ src/frontend/vite.config.js
 src/frontend/vite.config.d.ts
 
 .playwright-mcp/
+src/DeepEvals/results/
