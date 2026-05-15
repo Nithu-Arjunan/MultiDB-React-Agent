@@ -181,7 +181,7 @@ function LoginPage({ onLogin }: { onLogin: () => void }) {
         });
 
         if (!response.ok) {
-          throw new Error("Google sign-in was rejected.");
+          throw new Error(await readErrorDetail(response, "Google sign-in was rejected."));
         }
 
         const auth = (await response.json()) as AuthResponse;
@@ -437,6 +437,15 @@ function formatTraceValue(value: string) {
     return JSON.stringify(JSON.parse(value), null, 2);
   } catch {
     return value;
+  }
+}
+
+async function readErrorDetail(response: Response, fallback: string) {
+  try {
+    const data = (await response.json()) as { detail?: string };
+    return data.detail || fallback;
+  } catch {
+    return fallback;
   }
 }
 

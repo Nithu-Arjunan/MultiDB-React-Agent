@@ -22,6 +22,7 @@ class ConfigTests(unittest.TestCase):
                 "GOOGLE_CLIENT_ID": "google-client-id",
                 "JWT_SECRET_KEY": "jwt-secret",
                 "JWT_EXPIRE_MINUTES": "45",
+                "ALLOWED_ORIGINS": "http://127.0.0.1:8010,https://example.run.app",
             },
             clear=False,
         ):
@@ -31,6 +32,10 @@ class ConfigTests(unittest.TestCase):
             self.assertEqual(settings.google_client_id, "google-client-id")
             self.assertEqual(settings.jwt_secret_key, "jwt-secret")
             self.assertEqual(settings.jwt_expire_minutes, 45)
+            self.assertEqual(
+                settings.allowed_origins,
+                ["http://127.0.0.1:8010", "https://example.run.app"],
+            )
 
     def test_runtime_code_uses_config_instead_of_direct_environ_access(self) -> None:
         allowed = {

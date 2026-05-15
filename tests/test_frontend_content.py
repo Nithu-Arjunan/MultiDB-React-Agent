@@ -19,6 +19,13 @@ class FrontendContentTests(unittest.TestCase):
         self.assertNotIn("#c75f2a", styles)
         self.assertRegex(styles, r"background:\s*#(1d5b74|16724a|0f766e)")
 
+    def test_login_page_has_roomy_layout(self) -> None:
+        styles = (ROOT / "src" / "frontend" / "src" / "styles.css").read_text(encoding="utf-8")
+
+        self.assertIn("width: min(100%, 460px)", styles)
+        self.assertIn(".google-button-slot", styles)
+        self.assertIn("@media (max-width: 520px)", styles)
+
     def test_frontend_uses_streaming_chat_endpoint(self) -> None:
         source = (ROOT / "src" / "frontend" / "src" / "main.tsx").read_text(encoding="utf-8")
 
@@ -30,6 +37,7 @@ class FrontendContentTests(unittest.TestCase):
         index = (ROOT / "src" / "frontend" / "index.html").read_text(encoding="utf-8")
 
         self.assertIn('fetch("/auth/google"', source)
+        self.assertIn("readErrorDetail", source)
         self.assertIn('fetch("/auth/me"', source)
         self.assertIn("Authorization", source)
         self.assertIn("skynova-auth-token", source)

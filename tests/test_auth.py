@@ -50,6 +50,15 @@ class AuthEndpointTests(unittest.TestCase):
         self.assertEqual(data["user"]["email"], "user@example.com")
         self.assertTrue(data["access_token"])
 
+    def test_google_login_returns_401_when_google_token_verification_fails(self) -> None:
+        client = TestClient(app)
+
+        with patch("backend.main.verify_google_id_token", side_effect=ValueError("Token has wrong audience")):
+            response = client.post("/auth/google", json={"credential": "bad-google-id-token"})
+
+        self.assertEqual(response.status_code, 401)
+        self.assertIn("Google sign-in failed", response.json()["detail"])
+
 
 if __name__ == "__main__":
     unittest.main()

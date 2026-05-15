@@ -10,16 +10,16 @@ if __package__ in {None, ""}:
 
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from fastapi import Depends, FastAPI
+from fastapi import Depends, FastAPI, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
-from backend.auth import create_access_token, get_current_user, verify_google_id_token  # noqa: E402
-from config import settings  # noqa: E402
+from backend.auth import create_access_token, get_current_user, verify_google_id_token
+from config import settings
 
-from backend.agent import build_agent  # noqa: E402 — must load env before importing
+from backend.agent import build_agent
 
 
 # ── Request / Response models ─────────────────────────────────────────────────
@@ -86,7 +86,7 @@ app = FastAPI(title="SkyNova Multi-DB Agent", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=settings.allowed_origins,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -96,14 +96,26 @@ app.add_middleware(
 
 @app.post("/auth/google", response_model=AuthResponse)
 async def auth_google(req: GoogleLoginRequest):
-    google_user = verify_google_id_token(req.credential)
-    user = AuthUser(
-        sub=google_user["sub"],
-        email=google_user["email"],
-        name=google_user.get("name", ""),
-        picture=google_user.get("picture", ""),
-    )
-    access_token = create_access_token(user.model_dump())
+    try:
+        google_user = verify_google_id_token(req.credential)
+        user = AuthUser(
+            sub=google_user["sub"],
+            email=google_user["email"],
+            name=google_user.get("name", ""),
+            picture=google_user.get("picture", ""),
+        )
+        access_token = create_access_token(user.model_dump())
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=f"Google sign-in failed: {exc}",
+        ) from exc
+    except RuntimeError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Authentication is not configured correctly: {exc}",
+        ) from exc
+
     return AuthResponse(access_token=access_token, token_type="bearer", user=user)
 
 
