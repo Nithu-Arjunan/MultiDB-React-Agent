@@ -68,9 +68,60 @@ const TOKEN_KEY = "skynova-auth-token";
 const USER_KEY = "skynova-auth-user";
 
 function App() {
-  const [isLoggedIn, setIsLoggedIn] = useState(
-    () => Boolean(window.localStorage.getItem(TOKEN_KEY))
-  );
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isCheckingSession, setIsCheckingSession] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function validateStoredSession() {
+      const token = window.localStorage.getItem(TOKEN_KEY);
+      if (!token) {
+        setIsCheckingSession(false);
+        return;
+      }
+
+      try {
+        const response = await fetch("/auth/me", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!response.ok) {
+          removeStoredSession();
+          setIsLoggedIn(false);
+          return;
+        }
+        if (!cancelled) {
+          setIsLoggedIn(true);
+        }
+      } catch {
+        removeStoredSession();
+        if (!cancelled) {
+          setIsLoggedIn(false);
+        }
+      } finally {
+        if (!cancelled) {
+          setIsCheckingSession(false);
+        }
+      }
+    }
+
+    validateStoredSession();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  if (isCheckingSession) {
+    return (
+      <main className="login-shell">
+        <section className="login-panel" aria-live="polite">
+          <div className="brand-mark">SN</div>
+          <p className="muted">Checking session...</p>
+        </section>
+      </main>
+    );
+  }
 
   if (!isLoggedIn) {
     return <LoginPage onLogin={() => setIsLoggedIn(true)} />;
@@ -212,8 +263,7 @@ function ChatPage({ onLogout }: { onLogout: () => void }) {
       });
 
       if (response.status === 401) {
-        window.localStorage.removeItem(TOKEN_KEY);
-        window.localStorage.removeItem(USER_KEY);
+        removeStoredSession();
         onLogout();
         throw new Error("Your session expired. Please sign in again.");
       }
@@ -239,8 +289,7 @@ function ChatPage({ onLogout }: { onLogout: () => void }) {
   }
 
   function logout() {
-    window.localStorage.removeItem(TOKEN_KEY);
-    window.localStorage.removeItem(USER_KEY);
+    removeStoredSession();
     onLogout();
   }
 
@@ -584,6 +633,11 @@ function findLastToolCallIndex(toolCalls: ToolCall[], tool: string) {
     }
   }
   return -1;
+}
+
+function removeStoredSession() {
+  window.localStorage.removeItem(TOKEN_KEY);
+  window.localStorage.removeItem(USER_KEY);
 }
 
 function waitForGoogleIdentity() {

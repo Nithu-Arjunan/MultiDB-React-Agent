@@ -1,13 +1,13 @@
 """SQL tool: generates a safe SELECT query from natural language, validates it, then runs it."""
 from __future__ import annotations
 import json
-import os
 import re
 
 from langchain_core.tools import tool
 from langchain_openai import ChatOpenAI
 
 from backend.db.postgres import get_connection
+from config import settings
 
 # ── Schema + business rules injected into every SQL generation call ──────────
 SCHEMA_CONTEXT = """
@@ -64,7 +64,7 @@ STATEMENT_TIMEOUT_MS = 5000
 def _generate_sql(question: str) -> str:
     llm = ChatOpenAI(
         model="gpt-4o-mini",
-        api_key=os.environ["OPENAI_API_KEY"],
+        api_key=settings.openai_api_key,
         temperature=0,
     )
     messages = [

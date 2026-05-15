@@ -18,7 +18,7 @@ if str(SRC_ROOT) not in sys.path:
 
 load_dotenv(SRC_ROOT / ".env")
 
-from backend.agent import build_agent  # noqa: E402
+from backend.agent import build_agent
 
 
 GOLDEN_SET_PATH = Path(__file__).with_name("golden_cases.json")

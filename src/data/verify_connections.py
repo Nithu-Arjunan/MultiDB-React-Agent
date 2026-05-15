@@ -4,19 +4,14 @@
 """
 from __future__ import annotations
 
-from pathlib import Path
-
-from dotenv import load_dotenv
-import os
-
-load_dotenv(Path(__file__).parents[1] / ".env")
+from config import settings
 
 
 def check_mongodb() -> None:
     from pymongo import MongoClient
     from pymongo.errors import ServerSelectionTimeoutError
 
-    uri = os.environ["MONGO_URI"]
+    uri = settings.mongo_uri
     client = MongoClient(uri, serverSelectionTimeoutMS=5000)
     try:
         info = client.server_info()
@@ -30,7 +25,7 @@ def check_mongodb() -> None:
 def check_supabase() -> None:
     import psycopg2
 
-    uri = os.environ["SUPABASE_URI"]
+    uri = settings.supabase_uri
     try:
         conn = psycopg2.connect(uri, connect_timeout=5)
         cur = conn.cursor()

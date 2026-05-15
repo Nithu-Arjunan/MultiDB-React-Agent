@@ -1,6 +1,7 @@
 from __future__ import annotations
-import os
 from pymongo import MongoClient
+
+from config import settings
 
 _client: MongoClient | None = None
 
@@ -8,5 +9,5 @@ _client: MongoClient | None = None
 def get_db():
     global _client
     if _client is None:
-        _client = MongoClient(os.environ["MONGO_URI"])
+        _client = MongoClient(settings.mongo_uri)
     return _client["skynova"]

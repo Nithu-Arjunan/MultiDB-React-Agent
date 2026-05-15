@@ -7,15 +7,13 @@ Requires OPENAI_API_KEY and SUPABASE_URI in src/.env
 """
 from __future__ import annotations
 
-import os
 import re
 from pathlib import Path
 
 import psycopg2
-from dotenv import load_dotenv
 from openai import OpenAI
 
-load_dotenv(Path(__file__).parents[1] / ".env")
+from config import settings
 
 HANDBOOK_PATH = Path(__file__).parent / "skynova_handbook.txt"
 CHUNK_SIZE = 400      # target words per chunk
@@ -56,14 +54,14 @@ def main() -> None:
 
     print(f"Created {len(all_chunks)} chunks from handbook")
 
-    openai_client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
+    openai_client = OpenAI(api_key=settings.openai_api_key)
     texts = [c[2] for c in all_chunks]
 
     print("Embedding chunks via OpenAI...")
     embeddings = embed_texts(openai_client, texts)
     print(f"Got {len(embeddings)} embeddings")
 
-    conn = psycopg2.connect(os.environ["SUPABASE_URI"])
+    conn = psycopg2.connect(settings.supabase_uri)
     cur = conn.cursor()
 
     cur.execute("TRUNCATE TABLE handbook_chunks RESTART IDENTITY;")

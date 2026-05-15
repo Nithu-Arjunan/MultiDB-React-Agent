@@ -1,19 +1,19 @@
 """RAG tool: embeds the question and searches handbook_chunks via pgvector cosine similarity."""
 from __future__ import annotations
 import json
-import os
 
 from langchain_core.tools import tool
 from openai import OpenAI
 
 from backend.db.postgres import get_connection
+from config import settings
 
 EMBED_MODEL = "text-embedding-3-small"
 TOP_K = 5
 
 
 def _embed(text: str) -> list[float]:
-    client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
+    client = OpenAI(api_key=settings.openai_api_key)
     response = client.embeddings.create(model=EMBED_MODEL, input=[text])
     return response.data[0].embedding
 

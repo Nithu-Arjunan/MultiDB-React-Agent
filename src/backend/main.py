@@ -10,16 +10,14 @@ if __package__ in {None, ""}:
 
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from dotenv import load_dotenv
 from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
-load_dotenv(Path(__file__).parents[1] / ".env")
-
 from backend.auth import create_access_token, get_current_user, verify_google_id_token  # noqa: E402
+from config import settings  # noqa: E402
 
 from backend.agent import build_agent  # noqa: E402 — must load env before importing
 
@@ -111,9 +109,7 @@ async def auth_google(req: GoogleLoginRequest):
 
 @app.get("/auth/config", response_model=AuthConfigResponse)
 async def auth_config():
-    import os
-
-    return AuthConfigResponse(google_client_id=os.environ.get("GOOGLE_CLIENT_ID", ""))
+    return AuthConfigResponse(google_client_id=settings.google_client_id)
 
 
 @app.get("/auth/me", response_model=AuthUser)

@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import os
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
@@ -11,21 +10,19 @@ from google.auth.transport import requests as google_requests
 from google.oauth2 import id_token
 from jwt import InvalidTokenError
 
+from config import settings
+
 
 ALGORITHM = "HS256"
-DEFAULT_EXPIRE_MINUTES = 60
 bearer_scheme = HTTPBearer(auto_error=False)
 
 
 def _jwt_secret() -> str:
-    secret = os.environ.get("JWT_SECRET_KEY")
-    if not secret:
-        raise RuntimeError("JWT_SECRET_KEY must be configured.")
-    return secret
+    return settings.jwt_secret_key
 
 
 def _expire_minutes() -> int:
-    return int(os.environ.get("JWT_EXPIRE_MINUTES", DEFAULT_EXPIRE_MINUTES))
+    return settings.jwt_expire_minutes
 
 
 def create_access_token(claims: dict[str, Any]) -> str:
@@ -61,7 +58,7 @@ def get_current_user(
 
 
 def verify_google_id_token(credential: str) -> dict[str, Any]:
-    client_id = os.environ.get("GOOGLE_CLIENT_ID")
+    client_id = settings.google_client_id
     if not client_id:
         raise RuntimeError("GOOGLE_CLIENT_ID must be configured.")
 

@@ -2,12 +2,12 @@
 whitelisted SkyNova collections."""
 from __future__ import annotations
 import json
-import os
 
 from langchain_core.tools import tool
 from langchain_openai import ChatOpenAI
 
 from backend.db.mongo import get_db
+from config import settings
 
 ALLOWED_COLLECTIONS = {"support_tickets", "flight_reviews", "user_activity_logs"}
 
@@ -89,7 +89,7 @@ def _validate_filter(filter_obj: dict, path: str = "filter") -> None:
 def _generate_mongo_query(question: str) -> dict:
     llm = ChatOpenAI(
         model="gpt-4o-mini",
-        api_key=os.environ["OPENAI_API_KEY"],
+        api_key=settings.openai_api_key,
         temperature=0,
     )
     messages = [

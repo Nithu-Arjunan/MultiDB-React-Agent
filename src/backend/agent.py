@@ -1,6 +1,5 @@
 """LangChain ReAct agent wiring all three tools together."""
 from __future__ import annotations
-import os
 import re
 import time
 from types import SimpleNamespace
@@ -13,6 +12,7 @@ from langchain_openai import ChatOpenAI
 from backend.tools.sql_tool import sql_query
 from backend.tools.mongo_tool import mongo_query
 from backend.tools.rag_tool import handbook_search
+from config import settings
 
 TOOLS = [sql_query, mongo_query, handbook_search]
 TOOLS_BY_NAME = {tool.name: tool for tool in TOOLS}
@@ -211,7 +211,7 @@ class AgentExecutorAdapter:
 def build_agent() -> AgentExecutorAdapter:
     llm = ChatOpenAI(
         model="gpt-4o-mini",
-        api_key=os.environ["OPENAI_API_KEY"],
+        api_key=settings.openai_api_key,
         temperature=0,
     )
 

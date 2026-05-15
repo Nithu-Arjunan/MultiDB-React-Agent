@@ -11,15 +11,13 @@ Behaviour:
 """
 from __future__ import annotations
 import json
-import os
 import re
 from datetime import datetime
 from pathlib import Path
 
-from dotenv import load_dotenv
 from pymongo import MongoClient
 
-load_dotenv(Path(__file__).parents[1] / ".env")
+from config import settings
 
 ISO_RE = re.compile(r"^\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}:\d{2}(?:\.\d+)?Z?$")
 
@@ -39,7 +37,7 @@ def main() -> None:
     seed_path = Path(__file__).parent / "mongodb_seed.json"
     raw = json.loads(seed_path.read_text(encoding="utf-8"))
 
-    uri = os.environ["MONGO_URI"]
+    uri = settings.mongo_uri
     client = MongoClient(uri, serverSelectionTimeoutMS=5000)
     db = client["skynova"]
 
