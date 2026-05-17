@@ -1,10 +1,12 @@
 """SQL tool: generates a safe SELECT query from natural language, validates it, then runs it."""
 from __future__ import annotations
 import json
+import logging
 import re
 
 from langchain_core.tools import tool
 from langchain_openai import ChatOpenAI
+import psycopg2
 
 from backend.db.postgres import get_connection
 from config import settings
@@ -59,6 +61,7 @@ DANGEROUS_KEYWORDS = re.compile(
 )
 DEFAULT_LIMIT = 20
 STATEMENT_TIMEOUT_MS = 5000
+logger = logging.getLogger(__name__)
 
 
 def _generate_sql(question: str) -> str:
@@ -128,7 +131,16 @@ def sql_query(question: str) -> str:
     warnings = _validate_sql(sql)
     sql = _ensure_limit(sql)
 
-    rows = _run_sql(sql)
+    try:
+        rows = _run_sql(sql)
+    except psycopg2.Error:
+        logger.exception("supabase query failed")
+        return json.dumps(
+            {
+                "error": "Supabase is currently unavailable. Please try again later.",
+                "details": "Database connection failed.",
+            }
+        )
 
     result = {
         "sql_executed": sql,

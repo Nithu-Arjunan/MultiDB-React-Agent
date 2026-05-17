@@ -270,6 +270,12 @@ npm run build
 
 ## Deployment Notes
 
+Deployed app:
+
+```text
+https://multi-db-react-agent-259390522728.us-central1.run.app
+```
+
 The project is arranged so the frontend and backend can be deployed together:
 
 1. Build the React frontend with `npm run build`.

@@ -6,6 +6,7 @@ tests/__pycache__/
 
 src/.env
 .env
+*.env.yaml
 
 src/frontend/node_modules/
 src/frontend/dist/

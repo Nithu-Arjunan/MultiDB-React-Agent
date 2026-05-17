@@ -2,14 +2,17 @@
 whitelisted SkyNova collections."""
 from __future__ import annotations
 import json
+import logging
 
 from langchain_core.tools import tool
 from langchain_openai import ChatOpenAI
+from pymongo.errors import PyMongoError
 
 from backend.db.mongo import get_db
 from config import settings
 
 ALLOWED_COLLECTIONS = {"support_tickets", "flight_reviews", "user_activity_logs"}
+logger = logging.getLogger(__name__)
 
 SCHEMA_CONTEXT = """
 You are a MongoDB expert for SkyNova Airlines.
@@ -123,8 +126,17 @@ def mongo_query(question: str) -> str:
     except ValueError as exc:
         return json.dumps({"error": str(exc)})
 
-    db = get_db()
-    docs = list(db[collection_name].find(mongo_filter, {"_id": 0}).limit(20))
+    try:
+        db = get_db()
+        docs = list(db[collection_name].find(mongo_filter, {"_id": 0}).limit(20))
+    except PyMongoError:
+        logger.exception("mongodb query failed")
+        return json.dumps(
+            {
+                "error": "MongoDB is currently unavailable. Please try again later.",
+                "details": "Database connection failed.",
+            }
+        )
 
     return json.dumps(
         {

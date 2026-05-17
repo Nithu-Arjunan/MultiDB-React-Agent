@@ -1,9 +1,12 @@
 from __future__ import annotations
 
+import json
 import unittest
 from unittest.mock import Mock, patch
 
-from backend.tools.sql_tool import _ensure_limit, _run_sql
+import psycopg2
+
+from backend.tools.sql_tool import _ensure_limit, _run_sql, sql_query
 
 
 class SqlLimitTests(unittest.TestCase):
@@ -50,6 +53,28 @@ class SqlTimeoutTests(unittest.TestCase):
             ),
         )
         conn.close.assert_called_once_with()
+
+
+class SqlToolErrorHandlingTests(unittest.TestCase):
+    def test_returns_friendly_error_when_supabase_query_fails(self) -> None:
+        raw_error = (
+            "connection to server at aws-1-ap-south-1.pooler.supabase.com, "
+            "port 5432 failed: timeout expired"
+        )
+
+        with (
+            patch("backend.tools.sql_tool._generate_sql", return_value="SELECT flight_number FROM flights"),
+            patch("backend.tools.sql_tool._run_sql", side_effect=psycopg2.OperationalError(raw_error)),
+            self.assertLogs("backend.tools.sql_tool", level="ERROR") as logs,
+        ):
+            result = sql_query.invoke({"question": "Show flights"})
+
+        data = json.loads(result)
+        self.assertEqual(data["error"], "Supabase is currently unavailable. Please try again later.")
+        self.assertEqual(data["details"], "Database connection failed.")
+        self.assertNotIn("supabase.com", result)
+        self.assertNotIn("timeout expired", result)
+        self.assertIn("supabase query failed", "\n".join(logs.output))
 
 
 if __name__ == "__main__":

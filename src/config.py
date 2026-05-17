@@ -17,7 +17,6 @@ DEFAULT_ALLOWED_ORIGINS = (
 
 load_dotenv(ENV_PATH,override=False)
 
-
 class Settings:
     def _required(self, name: str) -> str:
         value = os.environ.get(name)
@@ -39,7 +38,7 @@ class Settings:
 
     @property
     def google_client_id(self) -> str:
-        return os.environ.get("GOOGLE_CLIENT_ID", "")
+        return self._required("GOOGLE_CLIENT_ID")
 
     @property
     def jwt_secret_key(self) -> str:

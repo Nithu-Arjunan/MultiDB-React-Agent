@@ -25,9 +25,12 @@ class AuthEndpointTests(unittest.TestCase):
     def test_chat_rejects_missing_bearer_token(self) -> None:
         client = TestClient(app)
 
-        response = client.post("/chat", json={"question": "Show flights"})
+        with self.assertLogs("backend.main", level="INFO") as logs:
+            response = client.post("/chat", json={"question": "Show flights"})
 
         self.assertEqual(response.status_code, 401)
+        self.assertIn("request completed", "\n".join(logs.output))
+        self.assertIn("POST /chat", "\n".join(logs.output))
 
     def test_google_login_returns_app_jwt(self) -> None:
         client = TestClient(app)
@@ -54,10 +57,12 @@ class AuthEndpointTests(unittest.TestCase):
         client = TestClient(app)
 
         with patch("backend.main.verify_google_id_token", side_effect=ValueError("Token has wrong audience")):
-            response = client.post("/auth/google", json={"credential": "bad-google-id-token"})
+            with self.assertLogs("backend.main", level="WARNING") as logs:
+                response = client.post("/auth/google", json={"credential": "bad-google-id-token"})
 
         self.assertEqual(response.status_code, 401)
         self.assertIn("Google sign-in failed", response.json()["detail"])
+        self.assertIn("google sign-in rejected", "\n".join(logs.output))
 
 
 if __name__ == "__main__":

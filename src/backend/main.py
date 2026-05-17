@@ -1,6 +1,7 @@
 """FastAPI entry point — exposes POST /chat."""
 from __future__ import annotations
 import json
+import logging
 import time
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -10,7 +11,7 @@ if __package__ in {None, ""}:
 
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from fastapi import Depends, FastAPI, HTTPException, status
+from fastapi import Depends, FastAPI, HTTPException, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
@@ -20,6 +21,8 @@ from backend.auth import create_access_token, get_current_user, verify_google_id
 from config import settings
 
 from backend.agent import build_agent
+
+logger = logging.getLogger(__name__)
 
 
 # ── Request / Response models ─────────────────────────────────────────────────
@@ -78,7 +81,13 @@ def get_frontend_dist_path() -> Path:
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     global agent_executor
+    logger.info(
+        "starting application allowed_origin_count=%s google_client_id_configured=%s",
+        len(settings.allowed_origins),
+        bool(settings.google_client_id),
+    )
     agent_executor = build_agent()
+    logger.info("agent initialized")
     yield
 
 
@@ -94,6 +103,32 @@ app.add_middleware(
 
 # ── Endpoint ──────────────────────────────────────────────────────────────────
 
+@app.middleware("http")
+async def log_requests(request: Request, call_next):
+    start = time.monotonic()
+    try:
+        response = await call_next(request)
+    except Exception:
+        elapsed_ms = int((time.monotonic() - start) * 1000)
+        logger.exception(
+            "request failed %s %s elapsed_ms=%s",
+            request.method,
+            request.url.path,
+            elapsed_ms,
+        )
+        raise
+
+    elapsed_ms = int((time.monotonic() - start) * 1000)
+    logger.info(
+        "request completed %s %s status=%s elapsed_ms=%s",
+        request.method,
+        request.url.path,
+        response.status_code,
+        elapsed_ms,
+    )
+    return response
+
+
 @app.post("/auth/google", response_model=AuthResponse)
 async def auth_google(req: GoogleLoginRequest):
     try:
@@ -106,11 +141,13 @@ async def auth_google(req: GoogleLoginRequest):
         )
         access_token = create_access_token(user.model_dump())
     except ValueError as exc:
+        logger.warning("google sign-in rejected: %s", exc)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=f"Google sign-in failed: {exc}",
         ) from exc
     except RuntimeError as exc:
+        logger.exception("google sign-in configuration error")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Authentication is not configured correctly: {exc}",
@@ -138,7 +175,11 @@ async def auth_me(current_user: dict = Depends(get_current_user)):
 async def chat(req: ChatRequest, current_user: dict = Depends(get_current_user)):
     start = time.monotonic()
 
-    result = agent_executor.invoke({"input": req.question})
+    try:
+        result = agent_executor.invoke({"input": req.question})
+    except Exception:
+        logger.exception("chat request failed")
+        raise
 
     tool_calls = []
     warnings = []
@@ -177,6 +218,7 @@ async def chat_stream(req: ChatRequest, current_user: dict = Depends(get_current
                 event_type = event.get("type", "message")
                 yield format_sse(event_type, event)
         except Exception as exc:
+            logger.exception("streaming chat request failed")
             yield format_sse("error", {"type": "error", "message": str(exc)})
 
     return StreamingResponse(event_stream(), media_type="text/event-stream")

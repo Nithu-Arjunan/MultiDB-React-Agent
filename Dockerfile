@@ -24,6 +24,8 @@ RUN pip install --no-cache-dir uv
 
 COPY pyproject.toml README.md ./
 COPY src/ ./src/
+RUN rm -f /app/src/.env /app/.env
+
 COPY --from=frontend-build /app/src/frontend/dist ./src/frontend/dist
 
 RUN uv pip install --system .

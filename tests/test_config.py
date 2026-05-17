@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import os
+import subprocess
+import sys
 import unittest
 from pathlib import Path
 from unittest.mock import patch
@@ -51,6 +53,63 @@ class ConfigTests(unittest.TestCase):
                 offenders.append(path.relative_to(ROOT).as_posix())
 
         self.assertEqual(offenders, [])
+
+    def test_config_import_does_not_emit_secret_debug_output(self) -> None:
+        env = os.environ.copy()
+        env.update(
+            {
+                "OPENAI_API_KEY": "test-openai-key",
+                "SUPABASE_URI": "postgresql://example",
+                "MONGO_URI": "mongodb://example",
+                "GOOGLE_CLIENT_ID": "google-client-id",
+                "JWT_SECRET_KEY": "jwt-secret",
+            }
+        )
+
+        result = subprocess.run(
+            [sys.executable, "-c", "import config"],
+            cwd=ROOT,
+            env=env,
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(result.stdout, "")
+        self.assertEqual(result.stderr, "")
+
+    def test_default_allowed_origins_include_cloud_run_url(self) -> None:
+        env = os.environ.copy()
+        env.update(
+            {
+                "OPENAI_API_KEY": "test-openai-key",
+                "SUPABASE_URI": "postgresql://example",
+                "MONGO_URI": "mongodb://example",
+                "GOOGLE_CLIENT_ID": "google-client-id",
+                "JWT_SECRET_KEY": "jwt-secret",
+            }
+        )
+        env.pop("ALLOWED_ORIGINS", None)
+
+        result = subprocess.run(
+            [
+                sys.executable,
+                "-c",
+                "from config import settings; print('\\n'.join(settings.allowed_origins))",
+            ],
+            cwd=ROOT,
+            env=env,
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn(
+            "https://multi-db-react-agent-259390522728.us-central1.run.app",
+            result.stdout,
+        )
 
 
 if __name__ == "__main__":
